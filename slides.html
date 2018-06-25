@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>methodsR</title>
+    <meta charset="utf-8">
+    <meta name="author" content="Michael Battaglia" />
+    <meta name="date" content="2018-06-26" />
+    <link rel="stylesheet" href="mc-xaringan.css" type="text/css" />
+    <link rel="stylesheet" href="mc-xaringan-fonts.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# methodsR
+### Michael Battaglia
+### June 26, 2018
+
+---
+
+
+layout: true
+background-color: #fafaef
+&lt;div class="my-footer"&gt;&lt;img src="mc_logo_rectangle.png" style="height: 30px;"/&gt;&lt;/div&gt;
+
+
+
+
+---
+
+# Install Package
+
+
+```r
+creds &lt;- git2r::cred_ssh_key("~/../.ssh/id_rsa.pub",
+                             "~/../.ssh/id_rsa")
+
+devtools::install_git("git@gitlab.com:methodsconsultants/r-package/methods-r-package.git",
+                      credentials = creds,
+                      upgrade_dependencies = FALSE)
+```
+
+---
+
+# Read in Example Data
+
+
+```r
+file &lt;- system.file("extdata", "example-treatment-data.csv", package = "methodsR")
+
+dat  &lt;- read.csv(file) %&gt;%
+  as_data_frame()
+
+dat %&gt;%
+  tail() %&gt;%
+  kable()
+```
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; gender &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; age &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; sugar_factor &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; treatment &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; happiness &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; happy &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; female &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 76 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.1635680 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; candy &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; sad &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; no &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; male &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 13 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.3999984 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; candy &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; sad &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; no &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; male &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 7 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.5366504 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; candy &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; sad &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; no &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; male &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 67 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.9412179 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; candy &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; NA &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; NA &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; male &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 75 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.7966411 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; ice cream &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; happy &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Yes &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; female &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 77 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.2233713 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; candy &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; sad &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; no &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+# Goal
+
+![Simple Table](table-1.png)
+
+---
+
+![Treatment Table](table-2.png)
+
+---
+
+# Continuous Variables Summary
+## Simple Univariate Tables
+
+Simple summary statistics for continuous variables is easy, so lets start here. `age` and `sugar_factor` are the continuous variables.
+
+
+```r
+cont_variables &lt;- c("age", "sugar_factor")
+
+mean_na &lt;- partial(mean, na.rm = TRUE)
+sd_na &lt;- partial(sd, na.rm = TRUE)
+
+dat %&gt;%
+  select(cont_variables) %&gt;%
+  summarise_all(funs("Mean" = mean_na, "SD" = sd_na)) %&gt;%
+  kable()
+```
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:right;"&gt; age_Mean &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; sugar_factor_Mean &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; age_SD &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; sugar_factor_SD &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:right;"&gt; 42.32525 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.4878811 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 22.11026 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.2956023 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+## Simple Univariate Tables
+
+
+```r
+dat %&gt;%
+  select(cont_variables) %&gt;%
+  summarise_all(funs("Mean" = mean_na, "SD" = sd_na)) %&gt;%
+  gather(var, val) %&gt;%
+  separate(var, c("var", "mean_sd"), "_(?!.*_)") %&gt;%
+  spread(key = mean_sd, value = val) %&gt;%
+  kable()
+```
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; var &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; Mean &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; SD &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; age &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 42.3252525 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 22.1102608 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; sugar_factor &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.4878811 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.2956023 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+## Simple Univariate Tables
+
+
+```r
+dat %&gt;%
+  select(cont_variables) %&gt;%
+  summarise_all(funs("Mean" = mean_na, "SD" = sd_na)) %&gt;%
+  gather(Variable, val) %&gt;%
+  separate(Variable, c("Variable", "mean_sd"), "_(?!.*_)") %&gt;%
+  spread(key = mean_sd, value = val) %&gt;%
+  mutate(`Mean (SD)` = paste0(round(Mean, 3), " (", round(SD, 3), ")")) %&gt;%
+  select(-Mean, -SD) %&gt;%
+  kable()
+```
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; Variable &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; Mean (SD) &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; age &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 42.325 (22.11) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; sugar_factor &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.488 (0.296) &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+## Simple Univariate Tables
+
+This is almost exactly what `mean_sd_cont` does when a treatment variable is not provided. 
+
+
+```r
+dat %&gt;%
+  mean_sd_cont(cont_variables = c("age", "sugar_factor")) %&gt;%
+  kable()
+```
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; Variable &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; Mean (SD) &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; age &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 42.325 (22.11) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; sugar_factor &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.488 (0.296) &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+## Simple Univariate Tables
+
+Also if variables are not provided, it will infer the variables from column types. 
+
+
+```r
+dat %&gt;%
+  mean_sd_cont() %&gt;%
+  kable()
+```
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; Variable &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; Mean (SD) &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; age &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 42.325 (22.11) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; sugar_factor &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.488 (0.296) &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+## Split by Treatment
+
+Presenting a table of summary statistics split by a treatment variable, along with p-values is a common task. 
+
+
+```r
+summary_tab &lt;- dat %&gt;%
+  select(cont_variables, treatment) %&gt;%
+  group_by(treatment) %&gt;%
+  summarise_all(funs("Mean" = mean_na, "SD" = sd_na)) %&gt;%
+  gather(Variable, val, -treatment) %&gt;%
+  separate(Variable, c("Variable", "mean_sd"), "_(?!.*_)") %&gt;%
+  spread(key = mean_sd, value = val) %&gt;%
+  mutate(`Mean (SD)` = paste0(round(Mean, 3), " (", round(SD, 3), ")")) %&gt;%
+  select(-Mean, -SD) %&gt;%
+  spread(treatment, `Mean (SD)`)
+
+summary_tab %&gt;%
+  kable()
+```
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; Variable &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; candy &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; ice cream &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; age &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 42.26 (22.616) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 42.394 (21.611) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; sugar_factor &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.456 (0.3) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.522 (0.287) &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+## Split by Treatment
+
+
+```r
+t_test_p(df = dat, var = "age", treatment = "treatment")
+```
+
+```
+## [1] 0.9461444
+```
+
+```r
+summary_tab %&gt;%
+  mutate(`P Value` = purrr::map_dbl(Variable, partial(t_test_p, df = dat, treatment = "treatment"))) %&gt;%
+  kable()
+```
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; Variable &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; candy &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; ice cream &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; P Value &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; age &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 42.26 (22.616) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 42.394 (21.611) &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.9461444 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; sugar_factor &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.456 (0.3) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.522 (0.287) &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.0127392 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+## Split by Treatment
+
+`mean_sd_cont` will produce a treatment-split table if a treatment column is specified.
+
+
+```r
+dat %&gt;%
+  mean_sd_cont(treatment = "treatment", cont_variables = c("age", "sugar_factor")) %&gt;%
+  kable()
+```
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; Variable &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; candy &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; ice cream &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; P Value &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; age &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 42.26 (22.616) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 42.394 (21.611) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.946 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; sugar_factor &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.456 (0.3) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.522 (0.287) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.013 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+## Split by Treatment
+
+
+```r
+dat %&gt;%
+  mean_sd_cont(treatment = "treatment") %&gt;%
+  kable()
+```
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; Variable &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; candy &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; ice cream &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; P Value &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; age &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 42.26 (22.616) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 42.394 (21.611) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.946 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; sugar_factor &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.456 (0.3) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.522 (0.287) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.013 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+## Split by Treatment
+
+By default it will round p-values, you can get the raw p-value by setting `round_p = FALSE`.
+
+
+```r
+dat %&gt;%
+  mean_sd_cont(treatment = "treatment", round_p = FALSE) %&gt;%
+  kable()
+```
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; Variable &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; candy &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; ice cream &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; P Value &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; age &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 42.26 (22.616) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 42.394 (21.611) &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.9461444 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; sugar_factor &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.456 (0.3) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.522 (0.287) &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.0127392 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+# Categorical Variable Summary
+
+## Univariate Summary Table
+
+
+```r
+cat_variables &lt;- c("gender", "happiness", "happy")
+
+dat &lt;- dat %&gt;%
+  mutate_if(is.factor, as.character)
+```
+
+
+```r
+dat %&gt;%
+  count(gender) %&gt;%
+  kable()
+```
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; gender &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; n &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; female &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 234 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; male &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 266 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+## Univariate Summary Table
+
+
+```r
+dat %&gt;%
+  count(gender) %&gt;%
+  mutate(`N (%)` = methodsR:::proportions(n)) %&gt;%
+  select(-n) %&gt;%
+  kable()
+```
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; gender &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; N (%) &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; female &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 234 (46.8%) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; male &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 266 (53.2%) &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+## Univariate Summary Table
+
+
+```r
+dat %&gt;%
+  count(gender) %&gt;%
+  mutate(`N (%)` = methodsR:::proportions(n)) %&gt;%
+  select(-n) %&gt;%
+  methodsR:::add_spacing(is_treatment = FALSE) %&gt;%
+  kable()
+```
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; Variable &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; Label &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; N (%) &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; gender &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; female &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 234 (46.8%) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; male &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 266 (53.2%) &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+## Univariate Summary Table
+
+
+```r
+simple_one_variable &lt;- function(df, var) {
+  
+  var &lt;- sym(var)
+  
+  df %&gt;%
+    count(!!var) %&gt;%
+    filter(!is.na(!!var)) %&gt;%
+    mutate(`N (%)` = methodsR:::proportions(n)) %&gt;%
+    select(-n) %&gt;%
+    methodsR:::add_spacing(is_treatment = FALSE)
+  
+}
+```
+
+---
+
+## Univariate Summary Table
+
+
+```r
+cat_variables %&gt;%
+  map_dfr(partial(simple_one_variable, df = dat)) %&gt;%
+  kable()
+```
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; Variable &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; Label &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; N (%) &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; gender &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; female &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 234 (46.8%) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; male &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 266 (53.2%) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; happiness &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; happy &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 366 (77.71%) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; sad &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 105 (22.29%) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; happy &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; no &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 105 (22.29%) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; yes &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 91 (19.32%) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Yes &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 275 (58.39%) &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+## Univariate Summary Table
+
+`cat_summary` provides this functionality, along with additional features such as convering yes/no and 0/1 variables to binary.
+
+
+```r
+dat %&gt;%
+  cat_summary(cat_variables = c("gender", "happiness", "happy")) %&gt;%
+  kable()
+```
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; Variable &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; Label &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; N (%) &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; gender &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; female &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 234 (46.8%) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; male &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 266 (53.2%) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; happiness &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; happy &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 366 (77.71%) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; sad &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 105 (22.29%) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; happy &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 366 (77.71%) &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+## Univariate Summary Table
+
+
+```r
+dat %&gt;%
+  cat_summary() %&gt;%
+  kable()
+```
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; Variable &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; Label &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; N (%) &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; gender &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; female &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 234 (46.8%) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; male &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 266 (53.2%) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; treatment &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; candy &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 257 (51.4%) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; ice cream &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 243 (48.6%) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; happiness &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; happy &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 366 (77.71%) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; sad &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 105 (22.29%) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; happy &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 366 (77.71%) &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+## Summary Table Split by Treatment
+
+
+```r
+dat %&gt;%
+  select(gender, treatment) %&gt;%
+  group_by(treatment) %&gt;%
+  count(gender) %&gt;%
+  spread(treatment, n) %&gt;%
+  mutate_at(vars(-gender), funs(methodsR:::proportions)) %&gt;%
+  kable()
+```
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; gender &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; candy &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; ice cream &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; female &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 124 (48.25%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 110 (45.27%) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; male &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 133 (51.75%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 133 (54.73%) &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+## Summary Table Split by Treatment
+
+
+```r
+p_val &lt;- dat %&gt;%
+  chi_fisher_p("gender", "treatment") %&gt;%
+  round(3)
+
+dat %&gt;%
+  select(gender, treatment) %&gt;%
+  group_by(treatment) %&gt;%
+  count(gender) %&gt;%
+  spread(treatment, n) %&gt;%
+  mutate_at(vars(-gender), funs(methodsR:::proportions)) %&gt;%
+  methodsR:::add_spacing(is_treatment = TRUE, p_value = p_val) %&gt;%
+  kable()
+```
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; Variable &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; Label &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; candy &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; ice cream &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; P Value &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; gender &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.563 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; female &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 124 (48.25%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 110 (45.27%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; male &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 133 (51.75%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 133 (54.73%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+## Summary Table Split by Treatment
+
+Make function, and iterate.
+
+
+```r
+treat_one_variable &lt;- function(df, var, treatment) {
+  
+  var &lt;- sym(var)
+  treatment &lt;- sym(treatment)
+  
+  treat_messy &lt;- df %&gt;%
+    select(!!treatment, !!var) %&gt;%
+    group_by(!!treatment) %&gt;%
+    count(!!var) %&gt;%                              # Add counts
+    spread(!!treatment, n) %&gt;%                    # Reshape
+    filter(!is.na(!!var)) %&gt;%
+    mutate_at(vars(-UQ(var)), funs(methodsR:::proportions))  # Add proportions
+
+  p_val &lt;- df %&gt;%
+    chi_fisher_p(quo_name(var), quo_name(treatment)) %&gt;%
+    round(3)
+
+  treat_messy %&gt;%
+    methodsR:::add_spacing(is_treatment = TRUE, p_value = p_val)
+
+}
+```
+
+---
+
+## Summary Table Split by Treatment
+
+
+```r
+cat_variables %&gt;%
+  purrr::map_dfr(purrr::partial(treat_one_variable, df = dat, treatment = "treatment")) %&gt;%
+  kable()
+```
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; Variable &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; Label &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; candy &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; ice cream &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; P Value &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; gender &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.563 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; female &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 124 (48.25%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 110 (45.27%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; male &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 133 (51.75%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 133 (54.73%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; happiness &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.694 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; happy &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 185 (76.76%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 181 (78.7%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; sad &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 56 (23.24%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 49 (21.3%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; happy &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.855 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; no &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 56 (23.24%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 49 (21.3%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; yes &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 47 (19.5%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 44 (19.13%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Yes &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 138 (57.26%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 137 (59.57%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+## Summary Table Split by Treatment
+
+
+```r
+dat %&gt;%
+  cat_summary("treatment", c("gender", "happiness", "happy")) %&gt;%
+  kable()
+```
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; Variable &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; Label &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; candy &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; ice cream &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; P Value &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; gender &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.563 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; female &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 124 (48.25%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 110 (45.27%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; male &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 133 (51.75%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 133 (54.73%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; happiness &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.694 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; happy &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 185 (76.76%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 181 (78.7%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; sad &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 56 (23.24%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 49 (21.3%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; happy &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 185 (76.76%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 181 (78.7%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.694 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+## Summary Table Split by Treatment
+
+
+```r
+dat %&gt;%
+  cat_summary("treatment") %&gt;%
+  kable()
+```
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; Variable &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; Label &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; candy &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; ice cream &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; P Value &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; gender &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.563 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; female &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 124 (48.25%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 110 (45.27%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; male &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 133 (51.75%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 133 (54.73%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; happiness &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.694 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; happy &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 185 (76.76%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 181 (78.7%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; sad &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 56 (23.24%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 49 (21.3%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; happy &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 185 (76.76%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 181 (78.7%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.694 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+# Combined Continuous and Categorical Table
+
+
+```r
+dat %&gt;%
+  all_summary("treatment") %&gt;%
+  kable()
+```
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; Variable &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; Label &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; candy &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; ice cream &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; P Value &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; gender &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.563 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; female &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 124 (48.25%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 110 (45.27%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; male &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 133 (51.75%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 133 (54.73%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; happiness &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.694 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; happy &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 185 (76.76%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 181 (78.7%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; sad &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 56 (23.24%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 49 (21.3%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; happy &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 185 (76.76%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 181 (78.7%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.694 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; age &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 42.26 (22.616) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 42.394 (21.611) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.946 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; sugar_factor &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.456 (0.3) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.522 (0.287) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.013 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+
+```r
+dat %&gt;%
+  all_summary() %&gt;%
+  kable()
+```
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; Variable &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; Label &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; Statistics &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; gender &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; female &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 234 (46.8%) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; male &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 266 (53.2%) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; treatment &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; candy &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 257 (51.4%) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; ice cream &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 243 (48.6%) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; happiness &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; happy &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 366 (77.71%) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; sad &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 105 (22.29%) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; happy &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 366 (77.71%) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; age &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 42.325 (22.11) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; sugar_factor &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.488 (0.296) &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+    </textarea>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function() {
+  var d = document, s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})();</script>
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+  }
+});
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://cdn.bootcss.com/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
