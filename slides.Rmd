@@ -42,6 +42,8 @@ devtools::install_git("git@gitlab.com:methodsconsultants/r-package/methods-r-pac
 
 # Read in Example Data
 
+Made up dataset, which includes a few corner cases. The "treatment" is whether the person had ice cream or candy.
+
 ```{r}
 
 file <- system.file("extdata", "example-treatment-data.csv", package = "methodsR")
@@ -50,20 +52,56 @@ dat  <- read.csv(file) %>%
   as_data_frame()
 
 dat %>%
-  tail() %>%
+  tail(5) %>%
   kable()
 
 ```
 
 ---
 
-# Goal
+# Package Hierarchy
 
-![Simple Table](table-1.png)
+- `all_summary`
+    - `cat_summary`
+        - `cat_summary_simple`
+        - `cat_summary_treatment`
+    - `mean_sd_cont`
+        - `mean_sd_cont_simple`
+        - `mean_sd_cont_treatment`
 
 ---
 
-![Treatment Table](table-2.png)
+# Package Functions
+
+- `all_summary`: 
+    - Highest level function, only need to use this function
+    - Combines outputs of `cat_summary` and `mean_sd_cont` into one table
+- `cat_summary`:
+    - Makes summary table of categorical variables
+    - Calculates count and percentage of each variable
+    - Optionally can split by a treatment variable and calculate p-values
+- `mean_sd_cont`:
+    - Makes summary tables of continuous variables
+    - Produces mean and standard deviation for each variable
+    - Can calculate univariate stats, or split by treatment
+
+---
+
+# Goal
+
+The goal of these data summary functions are to make it as easy as possible to make tables like these:
+
+<p align="center">
+  <img src="table-1.png">
+</p>
+
+---
+
+# Goal
+
+<p align="center">
+  <img src="table-2.png">
+</p>
 
 ---
 

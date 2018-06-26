@@ -44,6 +44,8 @@ devtools::install_git("git@gitlab.com:methodsconsultants/r-package/methods-r-pac
 
 # Read in Example Data
 
+Made up dataset, which includes a few corner cases. The "treatment" is whether the person had ice cream or candy.
+
 
 ```r
 file &lt;- system.file("extdata", "example-treatment-data.csv", package = "methodsR")
@@ -52,7 +54,7 @@ dat  &lt;- read.csv(file) %&gt;%
   as_data_frame()
 
 dat %&gt;%
-  tail() %&gt;%
+  tail(5) %&gt;%
   kable()
 ```
 
@@ -68,14 +70,6 @@ dat %&gt;%
   &lt;/tr&gt;
  &lt;/thead&gt;
 &lt;tbody&gt;
-  &lt;tr&gt;
-   &lt;td style="text-align:left;"&gt; female &lt;/td&gt;
-   &lt;td style="text-align:right;"&gt; 76 &lt;/td&gt;
-   &lt;td style="text-align:right;"&gt; 0.1635680 &lt;/td&gt;
-   &lt;td style="text-align:left;"&gt; candy &lt;/td&gt;
-   &lt;td style="text-align:left;"&gt; sad &lt;/td&gt;
-   &lt;td style="text-align:left;"&gt; no &lt;/td&gt;
-  &lt;/tr&gt;
   &lt;tr&gt;
    &lt;td style="text-align:left;"&gt; male &lt;/td&gt;
    &lt;td style="text-align:right;"&gt; 13 &lt;/td&gt;
@@ -121,13 +115,49 @@ dat %&gt;%
 
 ---
 
-# Goal
+# Package Hierarchy
 
-![Simple Table](table-1.png)
+- `all_summary`
+    - `cat_summary`
+        - `cat_summary_simple`
+        - `cat_summary_treatment`
+    - `mean_sd_cont`
+        - `mean_sd_cont_simple`
+        - `mean_sd_cont_treatment`
 
 ---
 
-![Treatment Table](table-2.png)
+# Package Functions
+
+- `all_summary`: 
+    - Highest level function, only need to use this function
+    - Combines outputs of `cat_summary` and `mean_sd_cont` into one table
+- `cat_summary`:
+    - Makes summary table of categorical variables
+    - Calculates count and percentage of each variable
+    - Optionally can split by a treatment variable and calculate p-values
+- `mean_sd_cont`:
+    - Makes summary tables of continuous variables
+    - Produces mean and standard deviation for each variable
+    - Can calculate univariate stats, or split by treatment
+
+---
+
+# Goal
+
+The goal of these data summary functions are to make it as easy as possible to make tables like these:
+
+&lt;p align="center"&gt;
+  &lt;img src="table-1.png"&gt;
+&lt;/p&gt;
+
+---
+
+# Goal
+
+&lt;p align="center"&gt;
+  &lt;img src="table-2.png"&gt;
+&lt;/p&gt;
 
 ---
 
@@ -147,6 +177,10 @@ dat %&gt;%
   select(cont_variables) %&gt;%
   summarise_all(funs("Mean" = mean_na, "SD" = sd_na)) %&gt;%
   kable()
+```
+
+```
+## Warning: package 'bindrcpp' was built under R version 3.4.4
 ```
 
 &lt;table&gt;
