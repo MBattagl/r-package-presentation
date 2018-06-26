@@ -119,11 +119,8 @@ dat %&gt;%
 
 - `all_summary`
     - `cat_summary`
-        - `cat_summary_simple`
-        - `cat_summary_treatment`
     - `mean_sd_cont`
-        - `mean_sd_cont_simple`
-        - `mean_sd_cont_treatment`
+    - `median_IQR_cont`
 
 ---
 
@@ -135,11 +132,15 @@ dat %&gt;%
 - `cat_summary`:
     - Makes summary table of categorical variables
     - Calculates count and percentage of each variable
-    - Optionally can split by a treatment variable and calculate p-values
+    - P-value from chi-squared/fisher
 - `mean_sd_cont`:
     - Makes summary tables of continuous variables
     - Produces mean and standard deviation for each variable
-    - Can calculate univariate stats, or split by treatment
+    - P-value from t-test
+- `median_IQR_cont`:
+    - Summarizes continuous variables
+    - Calculates median and IQR
+    - P-value from Mann-Whitney-Wilcoxon
 
 ---
 
@@ -177,10 +178,6 @@ dat %&gt;%
   select(cont_variables) %&gt;%
   summarise_all(funs("Mean" = mean_na, "SD" = sd_na)) %&gt;%
   kable()
-```
-
-```
-## Warning: package 'bindrcpp' was built under R version 3.4.4
 ```
 
 &lt;table&gt;
@@ -277,7 +274,7 @@ dat %&gt;%
 
 ---
 
-## Simple Univariate Tables
+## `mean_sd_cont`
 
 This is almost exactly what `mean_sd_cont` does when a treatment variable is not provided. 
 
@@ -309,7 +306,7 @@ dat %&gt;%
 
 ---
 
-## Simple Univariate Tables
+## `mean_sd_cont`
 
 Also if variables are not provided, it will infer the variables from column types. 
 
@@ -335,6 +332,38 @@ dat %&gt;%
   &lt;tr&gt;
    &lt;td style="text-align:left;"&gt; sugar_factor &lt;/td&gt;
    &lt;td style="text-align:left;"&gt; 0.488 (0.296) &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+## `median_IQR_cont`
+
+`median_IQR_cont` works in exactly the same way.
+
+
+```r
+dat %&gt;%
+  median_IQR_cont() %&gt;%
+  kable()
+```
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; Variable &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; Median (IQR) &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; age &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 41 (37) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; sugar_factor &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.469 (0.525) &lt;/td&gt;
   &lt;/tr&gt;
 &lt;/tbody&gt;
 &lt;/table&gt;
@@ -430,7 +459,7 @@ summary_tab %&gt;%
 
 ---
 
-## Split by Treatment
+## `mean_sd_cont`
 
 `mean_sd_cont` will produce a treatment-split table if a treatment column is specified.
 
@@ -468,7 +497,7 @@ dat %&gt;%
 
 ---
 
-## Split by Treatment
+## `mean_sd_cont`
 
 
 ```r
@@ -504,7 +533,7 @@ dat %&gt;%
 
 ---
 
-## Split by Treatment
+## `mean_sd_cont`
 
 By default it will round p-values, you can get the raw p-value by setting `round_p = FALSE`.
 
@@ -536,6 +565,44 @@ dat %&gt;%
    &lt;td style="text-align:left;"&gt; 0.456 (0.3) &lt;/td&gt;
    &lt;td style="text-align:left;"&gt; 0.522 (0.287) &lt;/td&gt;
    &lt;td style="text-align:right;"&gt; 0.0127392 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+## `median_IQR_cont`
+
+`median_IQR_cont` works similarly. The statistics are the median and IQR, and the p-value comes from the Mann-Whitney-Wilcoxon test.
+
+
+```r
+dat %&gt;%
+  median_IQR_cont(treatment = "treatment") %&gt;%
+  kable()
+```
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; Variable &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; candy &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; ice cream &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; P Value &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; age &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 42 (40) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 41 (35) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.888 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; sugar_factor &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.438 (0.542) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.517 (0.478) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.012 &lt;/td&gt;
   &lt;/tr&gt;
 &lt;/tbody&gt;
 &lt;/table&gt;
@@ -657,6 +724,8 @@ dat %&gt;%
 
 ## Univariate Summary Table
 
+To do this for all variables, we can wrap this code in a function and iterate over all variables.
+
 
 ```r
 simple_one_variable &lt;- function(df, var) {
@@ -748,7 +817,7 @@ cat_variables %&gt;%
 
 ---
 
-## Univariate Summary Table
+## `cat_summary`
 
 `cat_summary` provides this functionality, along with additional features such as convering yes/no and 0/1 variables to binary.
 
@@ -808,7 +877,7 @@ dat %&gt;%
 
 ---
 
-## Univariate Summary Table
+## `cat_summary`
 
 
 ```r
@@ -1099,7 +1168,7 @@ cat_variables %&gt;%
 
 ---
 
-## Summary Table Split by Treatment
+## `cat_summary`
 
 
 ```r
@@ -1173,7 +1242,7 @@ dat %&gt;%
 
 ---
 
-## Summary Table Split by Treatment
+## `cat_summary`
 
 
 ```r
@@ -1247,7 +1316,12 @@ dat %&gt;%
 
 ---
 
-# Combined Continuous and Categorical Table
+## `all_summary`
+
+- `all_summary` provides all the functionality of the lower level functions
+- Creates a single table with continuous and categorical tables combined
+
+---
 
 
 ```r
@@ -1413,6 +1487,181 @@ dat %&gt;%
   &lt;/tr&gt;
 &lt;/tbody&gt;
 &lt;/table&gt;
+
+---
+
+
+```r
+dat %&gt;%
+  all_summary("treatment", cont_function = median_IQR_cont) %&gt;%
+  kable()
+```
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; Variable &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; Label &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; candy &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; ice cream &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; P Value &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; gender &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.563 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; female &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 124 (48.25%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 110 (45.27%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; male &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 133 (51.75%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 133 (54.73%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; happiness &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.694 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; happy &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 185 (76.76%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 181 (78.7%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; sad &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 56 (23.24%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 49 (21.3%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; happy &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 185 (76.76%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 181 (78.7%) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.694 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; age &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 42 (40) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 41 (35) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.888 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; sugar_factor &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.438 (0.542) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.517 (0.478) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.012 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+
+```r
+dat %&gt;%
+  all_summary(cont_function = median_IQR_cont) %&gt;%
+  kable()
+```
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; Variable &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; Label &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; Statistics &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; gender &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; female &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 234 (46.8%) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; male &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 266 (53.2%) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; treatment &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; candy &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 257 (51.4%) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; ice cream &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 243 (48.6%) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; happiness &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; happy &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 366 (77.71%) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; sad &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 105 (22.29%) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; happy &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 366 (77.71%) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; age &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 41 (37) &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; sugar_factor &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.469 (0.525) &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+# Future Work
+
+- Tests for median/IQR function
+- `ggplot` grouped bar-plot wrapper
+- Programatically format table into APA format and export into Word
     </textarea>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
 <script>var slideshow = remark.create({

@@ -63,11 +63,8 @@ dat %>%
 
 - `all_summary`
     - `cat_summary`
-        - `cat_summary_simple`
-        - `cat_summary_treatment`
     - `mean_sd_cont`
-        - `mean_sd_cont_simple`
-        - `mean_sd_cont_treatment`
+    - `median_IQR_cont`
 
 ---
 
@@ -79,11 +76,15 @@ dat %>%
 - `cat_summary`:
     - Makes summary table of categorical variables
     - Calculates count and percentage of each variable
-    - Optionally can split by a treatment variable and calculate p-values
+    - P-value from chi-squared/fisher
 - `mean_sd_cont`:
     - Makes summary tables of continuous variables
     - Produces mean and standard deviation for each variable
-    - Can calculate univariate stats, or split by treatment
+    - P-value from t-test
+- `median_IQR_cont`:
+    - Summarizes continuous variables
+    - Calculates median and IQR
+    - P-value from Mann-Whitney-Wilcoxon
 
 ---
 
@@ -160,7 +161,7 @@ dat %>%
 
 ---
 
-## Simple Univariate Tables
+## `mean_sd_cont`
 
 This is almost exactly what `mean_sd_cont` does when a treatment variable is not provided. 
 
@@ -174,7 +175,7 @@ dat %>%
 
 ---
 
-## Simple Univariate Tables
+## `mean_sd_cont`
 
 Also if variables are not provided, it will infer the variables from column types. 
 
@@ -182,6 +183,20 @@ Also if variables are not provided, it will infer the variables from column type
 
 dat %>%
   mean_sd_cont() %>%
+  kable()
+
+```
+
+---
+
+## `median_IQR_cont`
+
+`median_IQR_cont` works in exactly the same way.
+
+```{r}
+
+dat %>%
+  median_IQR_cont() %>%
   kable()
 
 ```
@@ -226,7 +241,7 @@ summary_tab %>%
 
 ---
 
-## Split by Treatment
+## `mean_sd_cont`
 
 `mean_sd_cont` will produce a treatment-split table if a treatment column is specified.
 
@@ -240,7 +255,7 @@ dat %>%
 
 ---
 
-## Split by Treatment
+## `mean_sd_cont`
 
 ```{r}
 
@@ -252,7 +267,7 @@ dat %>%
 
 ---
 
-## Split by Treatment
+## `mean_sd_cont`
 
 By default it will round p-values, you can get the raw p-value by setting `round_p = FALSE`.
 
@@ -260,6 +275,20 @@ By default it will round p-values, you can get the raw p-value by setting `round
 
 dat %>%
   mean_sd_cont(treatment = "treatment", round_p = FALSE) %>%
+  kable()
+
+```
+
+---
+
+## `median_IQR_cont`
+
+`median_IQR_cont` works similarly. The statistics are the median and IQR, and the p-value comes from the Mann-Whitney-Wilcoxon test.
+
+```{r}
+
+dat %>%
+  median_IQR_cont(treatment = "treatment") %>%
   kable()
 
 ```
@@ -320,6 +349,8 @@ dat %>%
 
 ## Univariate Summary Table
 
+To do this for all variables, we can wrap this code in a function and iterate over all variables.
+
 ```{r}
 
 simple_one_variable <- function(df, var) {
@@ -350,7 +381,7 @@ cat_variables %>%
 
 ---
 
-## Univariate Summary Table
+## `cat_summary`
 
 `cat_summary` provides this functionality, along with additional features such as convering yes/no and 0/1 variables to binary.
 
@@ -364,7 +395,7 @@ dat %>%
 
 ---
 
-## Univariate Summary Table
+## `cat_summary`
 
 ```{r}
 
@@ -457,7 +488,7 @@ cat_variables %>%
 
 ---
 
-## Summary Table Split by Treatment
+## `cat_summary`
 
 ```{r}
 
@@ -469,7 +500,7 @@ dat %>%
 
 ---
 
-## Summary Table Split by Treatment
+## `cat_summary`
 
 ```{r}
 
@@ -481,7 +512,12 @@ dat %>%
 
 ---
 
-# Combined Continuous and Categorical Table
+## `all_summary`
+
+- `all_summary` provides all the functionality of the lower level functions
+- Creates a single table with continuous and categorical tables combined
+
+---
 
 ```{r}
 
@@ -500,3 +536,31 @@ dat %>%
   kable()
 
 ```
+
+---
+
+```{r}
+
+dat %>%
+  all_summary("treatment", cont_function = median_IQR_cont) %>%
+  kable()
+
+```
+
+---
+
+```{r}
+
+dat %>%
+  all_summary(cont_function = median_IQR_cont) %>%
+  kable()
+
+```
+
+---
+
+# Future Work
+
+- Tests for median/IQR function
+- `ggplot` grouped bar-plot wrapper
+- Programatically format table into APA format and export into Word
